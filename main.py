@@ -1,6 +1,5 @@
 from DataSet_class import DataSet
 from Report_class import Report
-#Test
 
 file_name = input("Введите название файла: ")
 current_vacancy_name = input("Введите название профессии: ")
