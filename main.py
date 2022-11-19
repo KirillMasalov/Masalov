@@ -2,7 +2,7 @@ from DataSet_class import DataSet
 from Report_class import Report
 from Table_statistics import TableStatistics
 
-userQuery = input("Введите команду ")
+userQuery = input("Введите команду: (Вакансии / Статистика)")
 if userQuery == "Вакансии":
     TableStatistics.start_table_programm()
 elif userQuery == "Статистика":
