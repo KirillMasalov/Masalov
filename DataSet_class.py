@@ -3,7 +3,41 @@ import csv
 
 
 class DataSet:
+    """
+    DataSet - класс, который хранит все данные из CSV файлов в виде словарей
+
+    Атрибуты (все атрибуты имеют сеттеры)
+    ------------------------------------------------------------------------
+    __vacancies_count_by_year: {int: int}
+        Количество вакансий по годам
+    __sum_salaries_by_year: {int: float}
+        Сумма всех зарплат по годам
+    __current_count_by_year: {int: int}
+        Количество факансий для интересующей нас профессии по годам
+    __current_sum_salary_by_year: {int: float}
+        Сумма всех зарплат для интересующей нас професси по годам
+    __vacancies_count_by_town: {str: int}
+        Количество вакансий по городам
+    __vacancies_count: int (default=0)
+        Общее число вакансий
+    __current: str
+        Название интересующей нас профессии
+    __salaries_by_year: {int: float}
+        Зарплаты по годам
+    __current_salaries_by_year: {int: float}
+        Зарплаты по годам для интересующей нас профессии
+    __salaries_by_town: {str: float}
+        Зарплаты по городам
+    __vacancies_rate_by_town: {str: float}
+        Доля вакансий в каждом городе
+    """
     def __init__(self, profession_name: str):
+        """
+        Инициализирует объект
+        :param profession_name: str
+            задает название искомой профессии
+        :return: void
+        """
         self.__vacancies_count_by_year = {}
         self.__sum_salaries_by_year = {}
         self.__current_count_by_year = {}
@@ -48,6 +82,13 @@ class DataSet:
 
     @staticmethod
     def csv_reader(file_name: str) -> []:
+        """
+        Считывает данные из CSV файла, преоразует их в объекты Vacancy и возвращает список этих объектов
+        :param file_name: str
+            Имя файла с данными
+        :return: [Vacancy]
+            Список объектов Vacancy
+        """
         data = []
         with open(file_name, "r", encoding="UTF-8-sig") as file:
             file_reader = csv.DictReader(file, delimiter=",")
@@ -60,6 +101,15 @@ class DataSet:
 
     @staticmethod
     def parse_line_to_vacancy(line, headlines_list):
+        """
+        Преобразует строку из CSV файла в объект Vacancy
+        :param line: {}
+            Строка из CSV файла
+        :param headlines_list: [str]
+            Список заголовков столбцов в CSV файле
+        :return: Vacancy/None
+            Объект Vacancy, при удачном преобразовании, иначе None
+        """
         vacancy_dict = {}
         for headline in headlines_list:
             vacancy_dict[headline] = line[headline]
@@ -68,6 +118,14 @@ class DataSet:
         return None
 
     def fill_dictionaries(self, data: [Vacancy], current_vacancy_name):
+        """
+        Заполняет словари с данными
+        :param data: [Vacancy]
+            Данные в виде списка с объектами Vacancy
+        :param current_vacancy_name: str
+            Название интересующей нам профессии
+        :return: void
+        """
         for vacancy in data:
             key = int(vacancy.year)
             self.__vacancies_count_by_year[key] = self.__vacancies_count_by_year.setdefault(key, 0) + 1
@@ -84,9 +142,17 @@ class DataSet:
                     self.__current_sum_salary_by_year.setdefault(key, 0) + vacancy.average_ru_salary
 
     def calculate_vacancies_count(self):
+        """
+        Считает общее количество вакансий в данных
+        :return: void
+        """
         self.__vacancies_count = sum(self.__vacancies_count_by_town.values())
 
     def fill_statistics_dictionaries(self):
+        """
+        Заполняет словари со статистикой используя словари с данными
+        :return: void
+        """
         for key in self.__sum_salaries_by_year.keys():
             self.__salaries_by_year[key] = int(self.__sum_salaries_by_year[key] / (self.__vacancies_count_by_year[key]))
             if key in self.__current_count_by_year:

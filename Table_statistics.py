@@ -33,7 +33,26 @@ experience_to_num = {"noExperience": 0, "between1And3": 1, "between3And6": 2,
 
 
 class Salary:
+    """
+    Класс описывает сущность оклада
+
+    Атрибуты (все атрибуты имеют свойства)
+    ------------------------------------------------------------------------
+    __salary_from: str
+        Нижняя граница оклада
+    __salary_to: str
+        Верхняя граница оклада
+    __salary_currency: str
+        Валюта оклада
+    __salary_gross: str
+        До вычета налогов или нет
+    """
     def __init__(self, vacancy_dict: {}):
+        """
+        Инициализирует объект
+        :param vacancy_dict: {str: str}
+            Словарь содержащий информацию о вакансии
+        """
         self.__salary_from = vacancy_dict["salary_from"]
         self.__salary_to = vacancy_dict["salary_to"]
         self.__salary_gross = vacancy_dict["salary_gross"]
@@ -76,6 +95,30 @@ class Salary:
 
 
 class Vacancy_table:
+    """
+    Класс описывает сущность вакансии (Вакансии для печать таблицы)
+
+    Атрибуты (все атрибуты имеют свойства)
+    ------------------------------------------------------------------------
+    __name: str
+        Название вакансии
+    ___description: str
+        Описание вакансии
+    __key_skills: [str]
+        Список требуемых навыков
+    __experience_id: str
+        Информация о требуемом опыте работы
+    __premium: str
+        Премиальная вакансия или нет
+    __employer_name: str
+        Имя работодателя
+    __salary: Salary
+        Оклад
+    __area_name: str
+        Название региона
+    __published_at: str
+        Дата публикации вакансии
+    """
     def __init__(self, vacancy_dict: {}):
         self.__name = vacancy_dict["name"]
         self.__description = vacancy_dict["description"]
@@ -161,17 +204,46 @@ class Vacancy_table:
 
 
 class DataSet_table:
+    """
+    Класс обеспечивает получение, хранение и обработку данных из CSV файла
+
+     Атрибуты
+    ------------------------------------------------------------------------
+    file_name: str
+        Название CSV файла, в котором содержится вся информация
+    vacancies_objects: [Vacancy]
+        Список объектов Vacancy содержащих информацию для обработки
+    """
     def __init__(self, file_name: str, vacancies: [Vacancy_table] = 0):
+        """
+        Инициализирует объект
+        :param file_name: str
+            Название CSV файла
+        :param vacancies: [Vacancy]
+            Список объектов Vacancy содержащих информацию для обработки
+        """
         self.file_name = file_name
         self.vacancies_objects = vacancies
 
     def csv_parser(self):
+        """
+        Преобразует данные из CSV файла в список вакансий
+        :return: [Vacancy] / None
+            Список вакансий, если файл не пустой, иначе None
+        """
         data_tuple = self.__csv_reader()
         if self.__is_file_correct(data_tuple):
             return self.__csv_filter(data_tuple[1], data_tuple[0])
         return None
 
     def __is_file_correct(self, data_tuple: ([], [])) -> bool:
+        """
+        Проверяет файл на корректность (наличие данных)
+        :param data_tuple: ([str], [str])
+            Данные предстваленные в виде списка заголовков и списка данных
+        :return: bool
+            True если файл содержит данные, иначе False
+        """
         if data_tuple is None:
             print("Пустой файл")
             return False
@@ -181,6 +253,11 @@ class DataSet_table:
         return True
 
     def __csv_reader(self):
+        """
+        Считывает данные из файла и возвращает очищенные данные
+        :return: ([str],[str]) / None
+            Данные из файла если файл не пустой, иначе / None
+        """
         data = []
         if os.stat(self.file_name).st_size == 0:
             return None
@@ -193,6 +270,17 @@ class DataSet_table:
         return headlines_list, data
 
     def __parse_line(self, line: str, headlines_list: [], headlines_count: int) -> []:
+        """
+        Преобразует одну строку из CSV файла в список содержащий значения полей
+        :param line: str
+            Строка из CSV файла
+        :param headlines_list: [str]
+            Список заголовков
+        :param headlines_count: int
+            Число Заголовков
+        :return: [str] / None
+            Возвращает список значений при корректных данных, иначе None
+        """
         row = []
         for headline in headlines_list:
             if line[headline] and len(line[headline]) != 0:
@@ -201,6 +289,15 @@ class DataSet_table:
             return row
 
     def __parse_to_vacance(self, line: str, headlines_list: []) -> Vacancy_table:
+        """
+        Преобразует строку в объект Vacancy_table
+        :param line: str
+            Строка с данными
+        :param headlines_list: [str]
+            Список заголовков
+        :return: Vacancy_table
+            Объект содержащий информацию о вакансии
+        """
         vacance = {}
         for i in range(0, len(headlines_list)):
             if headlines_list[i] == "key_skills":
@@ -214,13 +311,36 @@ class DataSet_table:
         return Vacancy_table(vacance)
 
     def __remove_HTML_tags(self, string: str) -> str:
+        """
+        Убирает все HTML теги из строки
+        :param string: str
+            Исходная строка
+        :return: str
+            Стррока без HTML тегов
+        """
         return re.sub(r'<.*?>', '', string)
 
     def __remove_white_spaces(self, string: str) -> str:
+        """
+        Убирает все лишние пробелы
+        :param string: str
+            Исходная строка
+        :return: str
+            Строка без лищних пробелов
+        """
         no_undue_spaces = re.sub(r"\s+", " ", string)
         return no_undue_spaces.replace("\n", "").replace("\r", "").strip()
 
     def __csv_filter(self, data: [], headlines: []) -> []:
+        """
+        Фильтрует все данные, оставляя только корректные
+        :param data: [str]
+            Исходные неотфильтрованные данные
+        :param headlines: [str]
+            Список заголовков
+        :return: [Vacancy_table]
+            Список вакансий с корректными данными
+        """
         result_vacancies = []
         for line in data:
             if line is not None:
@@ -229,8 +349,16 @@ class DataSet_table:
 
 
 class InputConect:
+    """
+    Класс обеспечивает соединение ввода-вывода данных с пользователем, а также обработку ввода пользователя
+    """
     @staticmethod
     def is_input_correct() -> bool:
+        """
+        Проверяет правильность ввода пользователя
+        :return: bool
+            True если ввод корректен, иначе False
+        """
         if len(TableStatistics.filter_parameter) < 2 and TableStatistics.filter_input != "":
             print("Формат ввода некорректен")
             return False
@@ -248,6 +376,13 @@ class InputConect:
 
     @staticmethod
     def filter_vacancies(vacancies: [Vacancy_table]):
+        """
+        Фильтрует вакансии по ранне заданному признаку
+        :param vacancies: [Vacancy_table]
+            Список вакансий
+        :return: [Vacancy_table]
+            Отфильтрованный список вакансий
+        """
         filter_parameter = TableStatistics.filter_parameter
         if TableStatistics.filter_input == "":
             return vacancies
@@ -276,6 +411,13 @@ class InputConect:
 
     @staticmethod
     def sort_vacancies(vacancies: [Vacancy_table]):
+        """
+        Сортирует список вакансий
+        :param vacancies: [Vacancy_table]
+            Исходный список вакансий
+        :return: [Vacancy_table]
+            Отсортированный список вакансий
+        """
         sort_parameter = TableStatistics.sort_parameter
         needReverse = True if TableStatistics.is_reverse_sort == "Да" else False
         if sort_parameter == "" or sort_parameter not in reversed_dic_name.keys():
@@ -297,6 +439,13 @@ class InputConect:
 
     @staticmethod
     def get_vacancies_table(vacancies: []):
+        """
+        Создает и возвращает таблицу PrettyTable
+        :param vacancies: [Vacancy_table]
+            Список вакансий для создания таблицы
+        :return: PrettyTable / None
+            Возвращает таблицу если есть данные, иначе None
+        """
         if vacancies is None:
             return None
         if len(vacancies) == 0:
@@ -316,6 +465,11 @@ class InputConect:
 
     @staticmethod
     def print_vacancies_table(table: PrettyTable):
+        """
+        Печатает таблицу с нужными столбцами и строками
+        :param table: Таблица для печать
+        :return: void
+        """
         table.start = TableStatistics.low_confine if TableStatistics.low_confine is not None else 0
         if TableStatistics.high_confine is not None:
             table.end = TableStatistics.high_confine
@@ -327,6 +481,13 @@ class InputConect:
 
     @staticmethod
     def cut_values(values: []) -> []:
+        """
+        Обрезает все строки длиннее 100 символов
+        :param values: [str]
+            Список исходных строк
+        :return: [str]
+            Список обрезаных строк
+        """
         cutted_values = []
         for value in values:
             if len(value) > 100:
@@ -336,6 +497,13 @@ class InputConect:
 
     @staticmethod
     def formatter(vacancy: Vacancy_table) -> {}:
+        """
+        Форматирует Vacancy_table в словарь для печати правильного отображения во время печати
+        :param vacancy: Vacancy_table
+            Объект хранящий нформацию о вакансии
+        :return: {str: }
+            Словарь содержащий информацию о вакансии
+        """
         vacance = {}
         vacance["Название"] = vacancy.name if len(vacancy.name) != 0 else "Нет данных"
         vacance["Описание"] = vacancy.description if len(vacancy.description) != 0 else "Нет данных"
@@ -352,6 +520,13 @@ class InputConect:
 
     @staticmethod
     def parse_salary_field(salary: Salary) -> str:
+        """
+        Преобразует Salary в строковое поле для удобного отображения
+        :param salary: Salary
+            Объект содержащий информацию о окладе
+        :return: str
+            Строковое представление Salary
+        """
         if len(salary.salary_from) == 0 or len(salary.salary_to) == 0 \
                 or len(salary.salary_gross) == 0 or len(salary.salary_currency) == 0:
             return "Нет данных"
@@ -361,6 +536,15 @@ class InputConect:
 
     @staticmethod
     def parse_salary(low: str, high: str) -> str:
+        """
+        Преобразует величину оклада
+        :param low: str
+            Нижняя граница оклада
+        :param high: str
+            Верхняя граница оклада
+        :return: str
+            Преобразованная строка
+        """
         low_str = str(int(low.split(".")[0]))
         high_str = str(int(high.split(".")[0]))
         if len(low_str) <= 3 or len(high_str) <= 3:
@@ -369,6 +553,13 @@ class InputConect:
 
     @staticmethod
     def parse_date(date_str: str) -> str:
+        """
+        Преобразует строку даты
+        :param date_str: str
+            Исходная строка
+        :return: str
+            Преобразованная строка
+        """
         year = date_str[0:4]
         month = date_str[5:7]
         day = date_str[8:10]
@@ -376,8 +567,15 @@ class InputConect:
 
 
 class TableStatistics:
+    """
+    Класс реализующий логику запроса данных у пользователя и вывода таблицы о вакансиях
+    """
     @staticmethod
     def start_table_programm():
+        """
+        Запрашивает всю информацию у пользователя и печатает таблицу о вакансиях
+        :return: void
+        """
         TableStatistics.file_name = input("Введите название файла: ")
         TableStatistics.filter_input = input("Введите параметр фильтрации: ")
         TableStatistics.filter_parameter = list(filter(lambda item: item != "", TableStatistics.filter_input.split(": ")))

@@ -5,7 +5,37 @@ currency_to_rub = {
 
 
 class Vacancy:
+    """
+    Класс описывает сущность вакансии
+
+    Атрибуты (все атрибуты имеют свойства)
+    ------------------------------------------------------------------------
+    __name: str
+        Название вакансии
+    __salary_from: float
+        Нижняя граница оклада
+    __salary_to: float
+        Верхняя граница оклада
+    __salary_currency: str
+        Валюта оклада
+    __area_name: str
+        Название региона
+    __published_at: str
+        Дата публикации объявления
+
+    Отдельные свойства
+    ------------------------------------------------------------------------
+    year: str
+        Год публикации объявления
+    average_ru_salary: float
+        Средняя зарплата в рублях
+    """
     def __init__(self, vacancy_dict):
+        """
+        Инициализирует объект
+        :param vacancy_dict: {str: str}
+            Входящий словарь со всей информацие для инициализации объекта
+        """
         self.__name = vacancy_dict['name']
         self.__salary_from = float(vacancy_dict['salary_from'])
         self.__salary_to = float(vacancy_dict['salary_to'])
