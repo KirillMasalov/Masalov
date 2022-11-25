@@ -214,7 +214,7 @@ class DataSet_table:
     vacancies_objects: [Vacancy]
         Список объектов Vacancy содержащих информацию для обработки
     """
-    def __init__(self, file_name: str, vacancies: [Vacancy_table] = 0):
+    def __init__(self, file_name: str, vacancies: [Vacancy_table] = []):
         """
         Инициализирует объект
         :param file_name: str
@@ -243,6 +243,16 @@ class DataSet_table:
             Данные предстваленные в виде списка заголовков и списка данных
         :return: bool
             True если файл содержит данные, иначе False
+
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__is_file_correct((["name", "description"], []))
+        Нет данных
+        False
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__is_file_correct(None)
+        Пустой файл
+        False
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__is_file_correct((["name", "description"],
+        ... ["Programmer", "Create IT products"]))
+        True
         """
         if data_tuple is None:
             print("Пустой файл")
@@ -269,7 +279,7 @@ class DataSet_table:
                 data.append(self.__parse_line(line, headlines_list, headlines_count))
         return headlines_list, data
 
-    def __parse_line(self, line: str, headlines_list: [], headlines_count: int) -> []:
+    def __parse_line(self, line, headlines_list: [], headlines_count: int) -> []:
         """
         Преобразует одну строку из CSV файла в список содержащий значения полей
         :param line: str
@@ -278,8 +288,15 @@ class DataSet_table:
             Список заголовков
         :param headlines_count: int
             Число Заголовков
-        :return: [str] / None
-            Возвращает список значений при корректных данных, иначе None
+        :return: [str]
+            Возвращает список значений при корректных данных
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__parse_line(
+        ... {"name": "NAME", "description": "DESCRIPTION"}, ["name", "description"], 2)
+        ['NAME', 'DESCRIPTION']
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__parse_line(
+        ... {"name": "NAME", "description": ""}, ["name", "description"], 2)
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__parse_line(
+        ... {"name": "NAME", "description": "DESCRIPTION"}, ["name", "description"], 3)
         """
         row = []
         for headline in headlines_list:
@@ -288,7 +305,7 @@ class DataSet_table:
         if len(row) == headlines_count:
             return row
 
-    def __parse_to_vacance(self, line: str, headlines_list: []) -> Vacancy_table:
+    def __parse_to_vacance(self, line, headlines_list: []) -> Vacancy_table:
         """
         Преобразует строку в объект Vacancy_table
         :param line: str
@@ -297,6 +314,25 @@ class DataSet_table:
             Список заголовков
         :return: Vacancy_table
             Объект содержащий информацию о вакансии
+
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__parse_to_vacance(
+        ... ["NAME","DESCRIPTION", "Python", "morethan6", "True", "EMPLOYER_NAME", "100", "2000", "True", "RUR",
+        ... "AREA_NAME", "200:01:01"],
+        ... ["name", "description", "key_skills", "experience_id", "premium", "employer_name",
+        ... "salary_from", "salary_to", "salary_gross", "salary_currency", "area_name", "published_at"]).name
+        'NAME'
+        >>> len(DataSet_table("vacancies.csv", [])._DataSet_table__parse_to_vacance(
+        ... ["NAME","DESCRIPTION", "Python", "morethan6", "True", "EMPLOYER_NAME", "100", "2000", "True", "RUR",
+        ... "AREA_NAME", "200:01:01"],
+        ... ["name", "description", "key_skills", "experience_id", "premium", "employer_name",
+        ... "salary_from", "salary_to", "salary_gross", "salary_currency", "area_name", "published_at"]).key_skills)
+        1
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__parse_to_vacance(
+        ... ["NAME","DESCRIPTION", "Python", "morethan6", "True", "EMPLOYER_NAME", "100", "2000", "True", "RUR",
+        ... "AREA_NAME", "200:01:01"],
+        ... ["name", "description", "key_skills", "experience_id", "premium", "employer_name",
+        ... "salary_from", "salary_to", "salary_gross", "salary_currency", "area_name", "published_at"]).salary.salary_from
+        '100'
         """
         vacance = {}
         for i in range(0, len(headlines_list)):
@@ -317,6 +353,14 @@ class DataSet_table:
             Исходная строка
         :return: str
             Стррока без HTML тегов
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_HTML_tags("")
+        ''
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_HTML_tags("Str without tags")
+        'Str without tags'
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_HTML_tags("<p>Str without tags</p>")
+        'Str without tags'
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_HTML_tags("<h1><p>Str without tags</p></h1>")
+        'Str without tags'
         """
         return re.sub(r'<.*?>', '', string)
 
@@ -326,7 +370,15 @@ class DataSet_table:
         :param string: str
             Исходная строка
         :return: str
-            Строка без лищних пробелов
+            Строка без лишних пробелов
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_white_spaces(" ")
+        ''
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_white_spaces(" String without spaces")
+        'String without spaces'
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_white_spaces(" String without spaces ")
+        'String without spaces'
+        >>> DataSet_table("vacancies.csv", [])._DataSet_table__remove_white_spaces(" String        without  spaces    ")
+        'String without spaces'
         """
         no_undue_spaces = re.sub(r"\s+", " ", string)
         return no_undue_spaces.replace("\n", "").replace("\r", "").strip()
@@ -340,6 +392,23 @@ class DataSet_table:
             Список заголовков
         :return: [Vacancy_table]
             Список вакансий с корректными данными
+
+        >>> len(DataSet_table("vacancies.csv", [])._DataSet_table__csv_filter(
+        ... [["NAME","DESCRIPTION", "Python", "morethan6", "True", "EMPLOYER_NAME", "100", "2000", "True", "RUR",
+        ... "AREA_NAME", "2000:01:01"],
+        ... ["NAME","DESCRIPTION", "Python", "lessthan2", "True", "EMPLOYER_NAME", "20", "200", "False", "RUR",
+        ... "AREA_NAME", "2001:01:01"]],
+        ... ["name", "description", "key_skills", "experience_id", "premium", "employer_name",
+        ... "salary_from", "salary_to", "salary_gross", "salary_currency", "area_name", "published_at"]))
+        2
+        >>> len(DataSet_table("vacancies.csv", [])._DataSet_table__csv_filter(
+        ... [["NAME","DESCRIPTION", "Python", "morethan6", "True", "EMPLOYER_NAME", "100", "2000", "True", "RUR",
+        ... "AREA_NAME", "2000:01:01"],
+        ... ["NAME","DESCRIPTION", "Python", "lessthan2", "True", "EMPLOYER_NAME", "20", "200", "False", "RUR",
+        ... "AREA_NAME", "2001:01:01"], None, None],
+        ... ["name", "description", "key_skills", "experience_id", "premium", "employer_name",
+        ... "salary_from", "salary_to", "salary_gross", "salary_currency", "area_name", "published_at"]))
+        2
         """
         result_vacancies = []
         for line in data:
@@ -595,3 +664,6 @@ class TableStatistics:
                     InputConect.sort_vacancies(InputConect.filter_vacancies(dataset.vacancies_objects)))
                 if vacancies_table is not None:
                     InputConect.print_vacancies_table(vacancies_table)
+
+import doctest
+doctest.testfile("Table_statistics.py")
