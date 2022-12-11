@@ -38,6 +38,10 @@ class DataSet:
         Доля вакансий в каждом городе
     __available_currencies: [str]
         Вакансии с частотностью более 5000
+    __oldest_date: str
+        Дата самой старой вакансии
+    __youngest_date: str
+        Дата самой новой вакансии
     """
     def __init__(self, profession_name: str):
         """
@@ -62,6 +66,8 @@ class DataSet:
         self.__vacancies_rate_by_town = {}
 
         self.__available_currencies = None
+        self.__oldest_date = None
+        self.__youngest_date = None
 
     @property
     def vacancies_count(self):
@@ -95,53 +101,15 @@ class DataSet:
     def available_currencies(self):
         return self.__available_currencies
 
-    def currency_frequency_reader(self, file_name: str) -> (str, str):
-        """
-        Считывает CSV файл, а также берет всю нужную информацию
-        (крайние даты вакансий, валюты с нужной частотностью, вакансии с допустимыми валютами)
-        :param file_name: str
-            Название CSV файла
-        :return: (str, str)
-            Кортеж состоящий из крайних дат
-        """
-        oldest_date = None
-        youngest_date = None
-        currency_frequency = {}
-        data = []
-        with open(file_name, "r", encoding="UTF-8-sig") as file:
-            file_reader = csv.DictReader(file, delimiter=",")
-            headlines_list = list(file_reader.fieldnames)
-            for line in file_reader:
-                key = line["salary_currency"]
-                currency_frequency[key] = currency_frequency.setdefault(key, 0) + 1
-                vacancy = DataSet.parse_line_to_vacancy(line, headlines_list)
-                if vacancy is None:
-                    continue
-                oldest_date = vacancy.published_at if oldest_date is None or vacancy.published_at < oldest_date \
-                    else oldest_date
-                youngest_date = vacancy.published_at if youngest_date is None or vacancy.published_at > youngest_date \
-                    else youngest_date
-                data.append(vacancy)
-
-        self.__available_currencies = \
-            [item[0] for item in currency_frequency.items() if item[1] >= 5000 and item[0] != '']
-
-        #data = list(filter(lambda v: v.salary_currency in self.available_currencies, data))
-        return (oldest_date, youngest_date)
-
-    def generate_currency(self, oldest_date: str, youngest_date: str):
+    def generate_currency(self):
         """
         Генерирует CSV файл с курсами всех валют за указанный период
-        :param oldest_date: str
-            Дата начала периода
-        :param youngest_date: str
-            Дата окончания периода
         :return: Void
         """
-        first_year = int(oldest_date[0:4])
-        first_month = int(oldest_date[5:7])
-        last_year = int(youngest_date[0:4])
-        last_month = int(youngest_date[5:7])
+        first_year = int(self.__oldest_date[0:4])
+        first_month = int(self.__oldest_date[5:7])
+        last_year = int(self.__youngest_date[0:4])
+        last_month = int(self.__youngest_date[5:7])
         df = pd.DataFrame(columns=['date'] + self.__available_currencies)
         for year in range(first_year, last_year + 1):
             for month in range(1, 13):
@@ -153,12 +121,12 @@ class DataSet:
                 df.loc[len(df.index)] = row
         df.to_csv("currency.csv")
 
-    def get_row(self, month: str, year: str):
+    def get_row(self, month: int, year: int):
         """
         Возвращает список с курсами валют за указанный отрезок времени
-        :param month: str
+        :param month: int
             Интересующий месяц
-        :param year: str
+        :param year: int
             Интересующий год
         :return: [str/None]/None
             Список с курсами валют или None если информация недоступна
@@ -205,10 +173,10 @@ class DataSet:
                     data.append(vacancy)
         return data
 
-    @staticmethod
-    def csv_split_generator(file_name: str, folder_name: str):
+    def csv_split_generator(self, file_name: str, folder_name: str):
         """
         Генерирует разделенный по годам CSV файлы с даннымии из исходного CSV файла
+        А также собирает необходимые данные(Доступные валюты, крайние даты)
         :param file_name: str
             Название искодного CSV файла
         :param folder_name: str
@@ -216,15 +184,26 @@ class DataSet:
         :return: [str]
             Названия сгенерированых файлов
         """
+        currency_frequency = {}
         lines_by_year = {}
         with open(file_name, "r", encoding="UTF-8-sig") as file:
             file_reader = csv.DictReader(file, delimiter=",")
             headlines_list = list(file_reader.fieldnames)
             for line in file_reader:
                 key = line["published_at"][0:4]
+                currency_key = line["salary_currency"]
+                currency_frequency[currency_key] = currency_frequency.setdefault(currency_key, 0) + 1
+                self.__oldest_date = line['published_at'] \
+                    if self.__oldest_date is None or line['published_at'] < self.__oldest_date else self.__oldest_date
+                self.__youngest_date = line['published_at'] \
+                    if self.__youngest_date is None or line['published_at'] > self.__youngest_date \
+                    else self.__youngest_date
                 if key not in lines_by_year.keys():
                     lines_by_year[key] = []
                 lines_by_year[key].append(line.values())
+
+        self.__available_currencies = \
+            [item[0] for item in currency_frequency.items() if item[1] >= 5000 and item[0] != '']
 
         file_names = []
         for key in lines_by_year.keys():
